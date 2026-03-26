@@ -1,19 +1,36 @@
-# Challenge Quanta - BOM Microservice
+# 🚀 Challenge Quanta | BOM Microservice
 
-Microservicio reactivo en Java 21 con Spring Boot, Spring WebFlux funcional y arquitectura hexagonal para gestionar una BOM (Bill of Materials).
+<p align="left">
+  <img src="https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white" alt="Java 21">
+  <img src="https://img.shields.io/badge/Spring_Boot-4.0.4-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot">
+  <img src="https://img.shields.io/badge/WebFlux-Reactive-6DB33F" alt="WebFlux">
+  <img src="https://img.shields.io/badge/Build-Maven-C71A36?logo=apachemaven&logoColor=white" alt="Maven">
+  <img src="https://img.shields.io/badge/Database-H2%20(R2DBC)-0A6C74" alt="H2 R2DBC">
+  <img src="https://img.shields.io/badge/Architecture-Hexagonal-111827" alt="Hexagonal Architecture">
+</p>
 
-## Stack
+Microservicio reactivo para gestionar una **BOM (Bill of Materials)**: creación de productos, asociación de materiales por producto y cálculo de materiales requeridos para producción.
 
-- Java 21
-- Spring Boot 4.0.4
-- Spring WebFlux (functional endpoints)
-- Spring Data R2DBC
-- H2 en memoria (R2DBC)
-- MapStruct
-- Lombok
-- Maven
+## ✨ Características
 
-## Arquitectura
+- ⚡ API reactiva con **Spring WebFlux** y endpoints funcionales.
+- 🧱 Diseño con **arquitectura hexagonal** (puertos y adaptadores).
+- 🧮 Cálculo de requerimientos de materiales para lotes de producción.
+- ✅ Validaciones de entrada y manejo de errores unificado.
+- 🧪 Cobertura con pruebas unitarias y de integración reactiva.
+
+## 🛠️ Stack técnico
+
+- `Java 21`
+- `Spring Boot 4.0.4`
+- `Spring WebFlux`
+- `Spring Data R2DBC`
+- `H2 en memoria (R2DBC)`
+- `MapStruct`
+- `Lombok`
+- `Maven Wrapper`
+
+## 🧭 Arquitectura
 
 ```text
 domain
@@ -37,25 +54,38 @@ config
 shared.exception
 ```
 
-## Ejecutar la aplicación
+## ⚙️ Ejecución local
+
+### Requisitos
+
+- Java 21
+
+### Levantar el servicio
 
 ```bash
-./mvnw spring-boot:run
+./mvnw clean spring-boot:run
 ```
 
-La API queda disponible en:
-
-```text
-http://localhost:8080
-```
-
-## Ejecutar tests
+### Ejecutar pruebas
 
 ```bash
 ./mvnw test
 ```
 
-## Endpoints
+## 🌐 Accesos
+
+- API base: `http://localhost:8080`
+- Consola H2: `http://localhost:8080/h2-console`
+
+## 📡 Endpoints
+
+| Método | Ruta | Descripción | Código esperado |
+|---|---|---|---|
+| `POST` | `/products` | Crear producto | `201 Created` |
+| `POST` | `/products/{productId}/materials` | Agregar material a producto | `201 Created` |
+| `GET` | `/production/calculate?productId={id}&quantity={n}` | Calcular materiales requeridos | `200 OK` |
+
+## 🧪 Flujo de ejemplo (end-to-end)
 
 ### 1) Crear producto
 
@@ -65,8 +95,6 @@ curl -X POST "http://localhost:8080/products" \
   -d '{"name":"Zapato"}'
 ```
 
-Respuesta:
-
 ```json
 {
   "id": 1,
@@ -74,32 +102,27 @@ Respuesta:
 }
 ```
 
-### 2) Agregar material al producto
+### 2) Agregar materiales al producto
 
 ```bash
 curl -X POST "http://localhost:8080/products/1/materials" \
   -H "Content-Type: application/json" \
   -d '{"material":"Cuero","quantity":2}'
+
+curl -X POST "http://localhost:8080/products/1/materials" \
+  -H "Content-Type: application/json" \
+  -d '{"material":"Suela","quantity":1}'
+
+curl -X POST "http://localhost:8080/products/1/materials" \
+  -H "Content-Type: application/json" \
+  -d '{"material":"Cordones","quantity":1}'
 ```
 
-Respuesta:
-
-```json
-{
-  "id": 1,
-  "productId": 1,
-  "material": "Cuero",
-  "quantity": 2
-}
-```
-
-### 3) Calcular materiales para producción
+### 3) Calcular producción para 100 unidades
 
 ```bash
 curl "http://localhost:8080/production/calculate?productId=1&quantity=100"
 ```
-
-Respuesta:
 
 ```json
 {
@@ -122,7 +145,7 @@ Respuesta:
 }
 ```
 
-## Manejo de errores
+## 🚨 Manejo de errores
 
 Formato de error unificado:
 
@@ -134,18 +157,18 @@ Formato de error unificado:
 }
 ```
 
-## Validaciones implementadas
+## ✅ Validaciones implementadas
 
-- Nombre del producto obligatorio
-- Material obligatorio
-- `quantity` del material > 0
-- `productId` > 0
-- `quantity` de producción > 0
-- Producto inexistente -> `404`
-- Entrada inválida -> `400`
+- Nombre del producto obligatorio.
+- Material obligatorio.
+- `quantity` de material debe ser mayor a `0`.
+- `productId` debe ser mayor a `0`.
+- `quantity` de producción debe ser mayor a `0`.
+- Producto inexistente responde `404`.
+- Entrada inválida responde `400`.
 
-## Tests incluidos
+## 🧪 Testing incluido
 
-- Unit tests del servicio principal (`BomServiceTest`)
-- Tests reactivos con `StepVerifier`
-- Tests de endpoints con `WebTestClient` (`BomEndpointTest`)
+- Unit tests del servicio principal: `BomServiceTest`.
+- Pruebas reactivas con `StepVerifier`.
+- Pruebas de endpoints con `WebTestClient`: `BomEndpointTest`.
