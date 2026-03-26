@@ -1,0 +1,109 @@
+{
+  "info": {
+    "_postman_id": "95f76f7b-9f7f-40d3-8582-9f9321b1b0ad",
+    "name": "challenge-quanta",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "8454301",
+    "_collection_link": "https://go.postman.co/collection/8454301-95f76f7b-9f7f-40d3-8582-9f9321b1b0ad?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "create-product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"Zapato\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/products",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "add-materials-product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"material\": \"Suela\",\n    \"quantity\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/products/4/materials",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "products",
+            "4",
+            "materials"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "calculate",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/production/calculate?productId=3&quantity=100",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "production",
+            "calculate"
+          ],
+          "query": [
+            {
+              "key": "productId",
+              "value": "3"
+            },
+            {
+              "key": "quantity",
+              "value": "100"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
