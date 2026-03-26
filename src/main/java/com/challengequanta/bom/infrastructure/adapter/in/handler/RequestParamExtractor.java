@@ -26,7 +26,7 @@ public class RequestParamExtractor {
 
     private Long parsePositiveLong(String rawValue, String fieldName) {
         try {
-            Long value = Long.parseLong(rawValue);
+            long value = Long.parseLong(rawValue);
             if (value <= 0) {
                 throw new BadRequestException(fieldName + " must be greater than 0");
             }
@@ -38,7 +38,7 @@ public class RequestParamExtractor {
 
     private Integer parsePositiveInt(String rawValue, String fieldName) {
         try {
-            Integer value = Integer.parseInt(rawValue);
+            int value = Integer.parseInt(rawValue);
             if (value <= 0) {
                 throw new BadRequestException(fieldName + " must be greater than 0");
             }
