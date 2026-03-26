@@ -60,6 +60,14 @@ public class ProductRouter {
                                                     mediaType = "application/json",
                                                     schema = @Schema(implementation = ErrorResponse.class)
                                             )
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "409",
+                                            description = "Product already exists",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(implementation = ErrorResponse.class)
+                                            )
                                     )
                             }
                     )
@@ -110,6 +118,14 @@ public class ProductRouter {
                                     @ApiResponse(
                                             responseCode = "404",
                                             description = "Product not found",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(implementation = ErrorResponse.class)
+                                            )
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "409",
+                                            description = "Material already exists for product",
                                             content = @Content(
                                                     mediaType = "application/json",
                                                     schema = @Schema(implementation = ErrorResponse.class)

@@ -7,6 +7,7 @@ import com.challengequanta.bom.domain.port.in.command.CreateProductCommand;
 import com.challengequanta.bom.domain.port.out.ProductMaterialRepositoryPort;
 import com.challengequanta.bom.domain.port.out.ProductRepositoryPort;
 import com.challengequanta.bom.shared.exception.BadRequestException;
+import com.challengequanta.bom.shared.exception.ConflictException;
 import com.challengequanta.bom.shared.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,7 @@ class BomServiceTest {
 
     @Test
     void shouldCreateProductSuccessfully() {
+        when(productRepositoryPort.findByNameIgnoreCase("Zapato")).thenReturn(Mono.empty());
         when(productRepositoryPort.save(any(Product.class)))
                 .thenReturn(Mono.just(new Product(1L, "Zapato")));
 
@@ -44,6 +46,19 @@ class BomServiceTest {
                 .verifyComplete();
 
         verify(productRepositoryPort).save(any(Product.class));
+    }
+
+    @Test
+    void shouldFailWhenCreatingDuplicateProductName() {
+        when(productRepositoryPort.findByNameIgnoreCase("Zapato"))
+                .thenReturn(Mono.just(new Product(99L, "Zapato")));
+
+        StepVerifier.create(bomService.createProduct(new CreateProductCommand("  Zapato  ")))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(ConflictException.class);
+                    assertThat(error.getMessage()).isEqualTo("Product with name 'Zapato' already exists");
+                })
+                .verify();
     }
 
     @Test
@@ -62,6 +77,8 @@ class BomServiceTest {
         AddMaterialCommand command = new AddMaterialCommand("Cuero", 2);
 
         when(productRepositoryPort.findById(productId)).thenReturn(Mono.just(new Product(productId, "Zapato")));
+        when(productMaterialRepositoryPort.findByProductIdAndMaterialIgnoreCase(productId, "Cuero"))
+                .thenReturn(Mono.empty());
         when(productMaterialRepositoryPort.save(any(ProductMaterial.class)))
                 .thenReturn(Mono.just(new ProductMaterial(100L, productId, "Cuero", 2)));
 
@@ -92,6 +109,23 @@ class BomServiceTest {
     }
 
     @Test
+    void shouldFailWhenAddingDuplicateMaterialToProduct() {
+        Long productId = 10L;
+        AddMaterialCommand command = new AddMaterialCommand("Cuero", 2);
+
+        when(productRepositoryPort.findById(productId)).thenReturn(Mono.just(new Product(productId, "Zapato")));
+        when(productMaterialRepositoryPort.findByProductIdAndMaterialIgnoreCase(productId, "Cuero"))
+                .thenReturn(Mono.just(new ProductMaterial(501L, productId, "Cuero", 1)));
+
+        StepVerifier.create(bomService.addMaterial(productId, command))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(ConflictException.class);
+                    assertThat(error.getMessage()).isEqualTo("Material 'Cuero' already exists for product with id 10");
+                })
+                .verify();
+    }
+
+    @Test
     void shouldCalculateProductionSuccessfully() {
         Long productId = 1L;
 
@@ -112,6 +146,28 @@ class BomServiceTest {
                         && result.materials().get(1).required().equals(100)
                         && result.materials().get(2).material().equals("Cordones")
                         && result.materials().get(2).required().equals(100))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldMergeDuplicatedMaterialsWhenCalculatingProduction() {
+        Long productId = 1L;
+
+        when(productRepositoryPort.findById(productId)).thenReturn(Mono.just(new Product(productId, "Zapato")));
+        when(productMaterialRepositoryPort.findByProductId(productId)).thenReturn(Flux.just(
+                new ProductMaterial(1L, productId, "Cuero", 2),
+                new ProductMaterial(2L, productId, "cuero", 1),
+                new ProductMaterial(3L, productId, "Suela", 1)
+        ));
+
+        StepVerifier.create(bomService.calculateProduction(productId, 100))
+                .expectNextMatches(result -> result.product().equals("Zapato")
+                        && result.quantity().equals(100)
+                        && result.materials().size() == 2
+                        && result.materials().get(0).material().equals("Cuero")
+                        && result.materials().get(0).required().equals(300)
+                        && result.materials().get(1).material().equals("Suela")
+                        && result.materials().get(1).required().equals(100))
                 .verifyComplete();
     }
 

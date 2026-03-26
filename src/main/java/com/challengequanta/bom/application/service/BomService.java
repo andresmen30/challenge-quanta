@@ -11,12 +11,16 @@ import com.challengequanta.bom.domain.port.in.command.CreateProductCommand;
 import com.challengequanta.bom.domain.port.out.ProductMaterialRepositoryPort;
 import com.challengequanta.bom.domain.port.out.ProductRepositoryPort;
 import com.challengequanta.bom.shared.exception.BadRequestException;
+import com.challengequanta.bom.shared.exception.ConflictException;
 import com.challengequanta.bom.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +32,12 @@ public class BomService implements ProductUseCase, ProductionUseCase {
     @Override
     public Mono<Product> createProduct(final CreateProductCommand command) {
         validateProductName(command.name());
-        Product product = new Product(null, command.name().trim());
-        return productRepositoryPort.save(product);
+        String normalizedName = command.name().trim();
+
+        return productRepositoryPort.findByNameIgnoreCase(normalizedName)
+                .flatMap(existing -> Mono.<Product>error(new ConflictException(
+                        "Product with name '" + normalizedName + "' already exists")))
+                .switchIfEmpty(Mono.defer(() -> productRepositoryPort.save(new Product(null, normalizedName))));
     }
 
     @Override
@@ -37,12 +45,17 @@ public class BomService implements ProductUseCase, ProductionUseCase {
         validateProductId(productId);
         validateMaterial(command.material());
         validatePositiveQuantity(command.quantity());
+        String normalizedMaterial = command.material().trim();
 
         return productRepositoryPort.findById(productId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Product with id " + productId + " was not found")))
-                .flatMap(product -> productMaterialRepositoryPort.save(
-                        new ProductMaterial(null, productId, command.material().trim(), command.quantity())
-                ));
+                .flatMap(product -> productMaterialRepositoryPort.findByProductIdAndMaterialIgnoreCase(
+                                productId, normalizedMaterial)
+                        .flatMap(existing -> Mono.<ProductMaterial>error(new ConflictException(
+                                "Material '" + normalizedMaterial + "' already exists for product with id " + productId)))
+                        .switchIfEmpty(Mono.defer(() -> productMaterialRepositoryPort.save(
+                                new ProductMaterial(null, productId, normalizedMaterial, command.quantity())
+                        ))));
     }
 
     @Override
@@ -58,6 +71,7 @@ public class BomService implements ProductUseCase, ProductionUseCase {
                                 multiply(productMaterial.quantity(), quantity)
                         ))
                         .collectList()
+                        .map(this::mergeRequiredMaterials)
                         .map(materials -> new ProductionResult(product.name(), quantity, List.copyOf(materials))));
     }
 
@@ -67,6 +81,33 @@ public class BomService implements ProductUseCase, ProductionUseCase {
         } catch (ArithmeticException ex) {
             throw new BadRequestException("Quantity multiplication overflow");
         }
+    }
+
+    private Integer addExact(final Integer left, final Integer right) {
+        try {
+            return Math.addExact(left, right);
+        } catch (ArithmeticException ex) {
+            throw new BadRequestException("Quantity aggregation overflow");
+        }
+    }
+
+    private List<RequiredMaterial> mergeRequiredMaterials(final List<RequiredMaterial> materials) {
+        Map<String, RequiredMaterial> mergedByMaterial = new LinkedHashMap<>();
+
+        for (RequiredMaterial material : materials) {
+            String normalizedName = material.material().trim().toLowerCase(Locale.ROOT);
+            RequiredMaterial existing = mergedByMaterial.computeIfAbsent(
+                    normalizedName,
+                    ignored -> new RequiredMaterial(material.material().trim(), 0)
+            );
+
+            mergedByMaterial.put(normalizedName, new RequiredMaterial(
+                    existing.material(),
+                    addExact(existing.required(), material.required())
+            ));
+        }
+
+        return List.copyOf(mergedByMaterial.values());
     }
 
     private void validateProductName(final String name) {

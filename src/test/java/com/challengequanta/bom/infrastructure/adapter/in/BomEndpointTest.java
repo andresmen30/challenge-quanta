@@ -70,6 +70,35 @@ class BomEndpointTest {
     }
 
     @Test
+    void shouldReturnConflictWhenCreatingDuplicatedProductName() {
+        webTestClient.post()
+                .uri("/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {
+                          "name": "Zapato"
+                        }
+                        """)
+                .exchange()
+                .expectStatus().isCreated();
+
+        webTestClient.post()
+                .uri("/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {
+                          "name": "Zapato"
+                        }
+                        """)
+                .exchange()
+                .expectStatus().isEqualTo(409)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(409)
+                .jsonPath("$.message").isEqualTo("Product with name 'Zapato' already exists")
+                .jsonPath("$.timestamp").exists();
+    }
+
+    @Test
     void shouldAddMaterialSuccessfully() {
         Long productId = createProduct("Zapato");
 
@@ -108,6 +137,39 @@ class BomEndpointTest {
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(404)
                 .jsonPath("$.message").isEqualTo("Product with id 999 was not found")
+                .jsonPath("$.timestamp").exists();
+    }
+
+    @Test
+    void shouldReturnConflictWhenAddingDuplicatedMaterialToProduct() {
+        Long productId = createProduct("Zapato");
+
+        webTestClient.post()
+                .uri("/products/{productId}/materials", productId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {
+                          "material": "Cuero",
+                          "quantity": 2
+                        }
+                        """)
+                .exchange()
+                .expectStatus().isCreated();
+
+        webTestClient.post()
+                .uri("/products/{productId}/materials", productId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {
+                          "material": "Cuero",
+                          "quantity": 3
+                        }
+                        """)
+                .exchange()
+                .expectStatus().isEqualTo(409)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(409)
+                .jsonPath("$.message").isEqualTo("Material 'Cuero' already exists for product with id " + productId)
                 .jsonPath("$.timestamp").exists();
     }
 

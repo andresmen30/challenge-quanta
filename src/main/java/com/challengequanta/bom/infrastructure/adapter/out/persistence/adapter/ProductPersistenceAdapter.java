@@ -26,4 +26,10 @@ public class ProductPersistenceAdapter implements ProductRepositoryPort {
         return productR2dbcRepository.findById(id)
                 .map(productPersistenceMapper::toDomain);
     }
+
+    @Override
+    public Mono<Product> findByNameIgnoreCase(String name) {
+        return productR2dbcRepository.findByNameIgnoreCase(name)
+                .map(productPersistenceMapper::toDomain);
+    }
 }

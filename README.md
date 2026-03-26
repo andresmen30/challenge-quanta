@@ -178,6 +178,8 @@ Formato de error unificado:
 - `quantity` de material debe ser mayor a `0`.
 - `productId` debe ser mayor a `0`.
 - `quantity` de producción debe ser mayor a `0`.
+- Nombre de producto único (sin duplicados) -> `409`.
+- Material único por producto (sin duplicados) -> `409`.
 - Producto inexistente responde `404`.
 - Entrada inválida responde `400`.
 

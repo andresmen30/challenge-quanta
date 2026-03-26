@@ -9,4 +9,6 @@ public interface ProductMaterialRepositoryPort {
     Mono<ProductMaterial> save(ProductMaterial productMaterial);
 
     Flux<ProductMaterial> findByProductId(Long productId);
+
+    Mono<ProductMaterial> findByProductIdAndMaterialIgnoreCase(Long productId, String material);
 }
