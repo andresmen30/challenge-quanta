@@ -172,6 +172,20 @@ class BomEndpointTest {
                 .jsonPath("$.timestamp").exists();
     }
 
+    @Test
+    void shouldExposeOpenApiDocumentation() {
+        webTestClient.get()
+                .uri("/v3/api-docs")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.openapi").exists()
+                .jsonPath("$.paths['/products']").exists()
+                .jsonPath("$.paths['/products/{productId}/materials']").exists()
+                .jsonPath("$.paths['/production/calculate']").exists();
+    }
+
     private Long createProduct(String name) {
         return productRepository.save(new ProductEntity(null, name))
                 .map(ProductEntity::getId)

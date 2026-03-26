@@ -14,6 +14,7 @@ Microservicio reactivo para gestionar una **BOM (Bill of Materials)**: creación
 ## ✨ Características
 
 - ⚡ API reactiva con **Spring WebFlux** y endpoints funcionales.
+- 📘 Documentación OpenAPI 3 y Swagger UI integrada.
 - 🧱 Diseño con **arquitectura hexagonal** (puertos y adaptadores).
 - 🧮 Cálculo de requerimientos de materiales para lotes de producción.
 - ✅ Validaciones de entrada y manejo de errores unificado.
@@ -26,6 +27,7 @@ Microservicio reactivo para gestionar una **BOM (Bill of Materials)**: creación
 - `Spring WebFlux`
 - `Spring Data R2DBC`
 - `H2 en memoria (R2DBC)`
+- `Springdoc OpenAPI + Swagger UI`
 - `MapStruct`
 - `Lombok`
 - `Maven Wrapper`
@@ -75,7 +77,11 @@ shared.exception
 ## 🌐 Accesos
 
 - API base: `http://localhost:8080`
-- Consola H2: `http://localhost:8080/h2-console`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- OpenAPI YAML: `http://localhost:8080/v3/api-docs.yaml`
+
+> Nota: este proyecto usa WebFlux reactivo, por lo que `/h2-console` no está disponible como endpoint web embebido.
 
 ## 📡 Endpoints
 
@@ -84,6 +90,14 @@ shared.exception
 | `POST` | `/products` | Crear producto | `201 Created` |
 | `POST` | `/products/{productId}/materials` | Agregar material a producto | `201 Created` |
 | `GET` | `/production/calculate?productId={id}&quantity={n}` | Calcular materiales requeridos | `200 OK` |
+
+## 📘 Documentación de API
+
+La documentación se genera automáticamente a partir de las rutas funcionales y modelos del servicio.
+
+- Interfaz Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Especificación OpenAPI (JSON): `http://localhost:8080/v3/api-docs`
+- Especificación OpenAPI (YAML): `http://localhost:8080/v3/api-docs.yaml`
 
 ## 🧪 Flujo de ejemplo (end-to-end)
 
