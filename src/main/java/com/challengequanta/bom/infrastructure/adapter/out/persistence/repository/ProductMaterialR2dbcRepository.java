@@ -10,4 +10,6 @@ public interface ProductMaterialR2dbcRepository extends ReactiveCrudRepository<P
     Flux<ProductMaterialEntity> findByProductIdOrderByIdAsc(Long productId);
 
     Mono<ProductMaterialEntity> findByProductIdAndMaterialIgnoreCase(Long productId, String material);
+
+    Mono<Void> deleteByProductId(Long productId);
 }

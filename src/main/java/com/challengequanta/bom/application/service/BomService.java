@@ -41,6 +41,16 @@ public class BomService implements ProductUseCase, ProductionUseCase {
     }
 
     @Override
+    public Mono<Void> deleteProduct(final Long productId) {
+        validateProductId(productId);
+
+        return productRepositoryPort.findById(productId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Product with id " + productId + " was not found")))
+                .flatMap(product -> productMaterialRepositoryPort.deleteByProductId(productId)
+                        .then(productRepositoryPort.deleteById(productId)));
+    }
+
+    @Override
     public Mono<ProductMaterial> addMaterial(final Long productId, final AddMaterialCommand command) {
         validateProductId(productId);
         validateMaterial(command.material());

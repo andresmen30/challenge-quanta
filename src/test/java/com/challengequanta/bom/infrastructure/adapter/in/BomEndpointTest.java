@@ -4,6 +4,7 @@ import com.challengequanta.bom.infrastructure.adapter.out.persistence.entity.Pro
 import com.challengequanta.bom.infrastructure.adapter.out.persistence.entity.ProductMaterialEntity;
 import com.challengequanta.bom.infrastructure.adapter.out.persistence.repository.ProductMaterialR2dbcRepository;
 import com.challengequanta.bom.infrastructure.adapter.out.persistence.repository.ProductR2dbcRepository;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -235,6 +236,57 @@ class BomEndpointTest {
     }
 
     @Test
+    void shouldDeleteProductSuccessfully() {
+        Long productId = createProduct("Zapato");
+
+        webTestClient.delete()
+                .uri("/products/{productId}", productId)
+                .exchange()
+                .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldDeleteProductAndItsMaterials() {
+        Long productId = createProduct("Zapato");
+        materialRepository.saveAll(Flux.just(
+                new ProductMaterialEntity(null, productId, "Cuero", 2),
+                new ProductMaterialEntity(null, productId, "Suela", 1)
+        )).collectList().block();
+
+        webTestClient.delete()
+                .uri("/products/{productId}", productId)
+                .exchange()
+                .expectStatus().isNoContent();
+
+        Long materialsCount = materialRepository.findByProductIdOrderByIdAsc(productId).count().block();
+        assertThat(materialsCount).isZero();
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingMissingProduct() {
+        webTestClient.delete()
+                .uri("/products/{productId}", 999)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(404)
+                .jsonPath("$.message").isEqualTo("Product with id 999 was not found")
+                .jsonPath("$.timestamp").exists();
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenDeletingWithInvalidProductId() {
+        webTestClient.delete()
+                .uri("/products/{productId}", 0)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(400)
+                .jsonPath("$.message").isEqualTo("productId must be greater than 0")
+                .jsonPath("$.timestamp").exists();
+    }
+
+    @Test
     void shouldExposeOpenApiDocumentation() {
         webTestClient.get()
                 .uri("/v3/api-docs")
@@ -244,6 +296,7 @@ class BomEndpointTest {
                 .expectBody()
                 .jsonPath("$.openapi").exists()
                 .jsonPath("$.paths['/products']").exists()
+                .jsonPath("$.paths['/products/{productId}']").exists()
                 .jsonPath("$.paths['/products/{productId}/materials']").exists()
                 .jsonPath("$.paths['/production/calculate']").exists();
     }

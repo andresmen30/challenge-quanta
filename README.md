@@ -88,6 +88,7 @@ shared.exception
 | Método | Ruta | Descripción | Código esperado |
 |---|---|---|---|
 | `POST` | `/products` | Crear producto | `201 Created` |
+| `DELETE` | `/products/{productId}` | Eliminar producto y sus materiales | `204 No Content` |
 | `POST` | `/products/{productId}/materials` | Agregar material a producto | `201 Created` |
 | `GET` | `/production/calculate?productId={id}&quantity={n}` | Calcular materiales requeridos | `200 OK` |
 

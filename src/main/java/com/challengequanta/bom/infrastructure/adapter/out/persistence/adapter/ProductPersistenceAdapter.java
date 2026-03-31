@@ -32,4 +32,9 @@ public class ProductPersistenceAdapter implements ProductRepositoryPort {
         return productR2dbcRepository.findByNameIgnoreCase(name)
                 .map(productPersistenceMapper::toDomain);
     }
+
+    @Override
+    public Mono<Void> deleteById(Long id) {
+        return productR2dbcRepository.deleteById(id);
+    }
 }

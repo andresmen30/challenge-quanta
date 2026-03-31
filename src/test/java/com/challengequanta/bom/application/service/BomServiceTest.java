@@ -192,4 +192,41 @@ class BomServiceTest {
                 })
                 .verify();
     }
+
+    @Test
+    void shouldDeleteProductSuccessfully() {
+        Long productId = 1L;
+
+        when(productRepositoryPort.findById(productId)).thenReturn(Mono.just(new Product(productId, "Zapato")));
+        when(productMaterialRepositoryPort.deleteByProductId(productId)).thenReturn(Mono.empty());
+        when(productRepositoryPort.deleteById(productId)).thenReturn(Mono.empty());
+
+        StepVerifier.create(bomService.deleteProduct(productId))
+                .verifyComplete();
+
+        verify(productMaterialRepositoryPort).deleteByProductId(productId);
+        verify(productRepositoryPort).deleteById(productId);
+    }
+
+    @Test
+    void shouldFailWhenDeletingMissingProduct() {
+        when(productRepositoryPort.findById(99L)).thenReturn(Mono.empty());
+
+        StepVerifier.create(bomService.deleteProduct(99L))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(NotFoundException.class);
+                    assertThat(error.getMessage()).isEqualTo("Product with id 99 was not found");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenDeletingWithInvalidProductId() {
+        StepVerifier.create(Mono.defer(() -> bomService.deleteProduct(0L)))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("productId must be greater than 0");
+                })
+                .verify();
+    }
 }

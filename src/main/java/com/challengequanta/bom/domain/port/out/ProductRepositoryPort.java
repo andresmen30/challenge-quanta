@@ -10,4 +10,6 @@ public interface ProductRepositoryPort {
     Mono<Product> findById(Long id);
 
     Mono<Product> findByNameIgnoreCase(String name);
+
+    Mono<Void> deleteById(Long id);
 }

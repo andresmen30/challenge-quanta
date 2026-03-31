@@ -36,6 +36,13 @@ public class ProductHandler {
                         .bodyValue(productResponse));
     }
 
+    public Mono<ServerResponse> deleteProduct(final ServerRequest request) {
+        Long productId = requestParamExtractor.positiveLongPathVariable(request, "productId");
+
+        return productUseCase.deleteProduct(productId)
+                .then(ServerResponse.noContent().build());
+    }
+
     public Mono<ServerResponse> addMaterial(final ServerRequest request) {
         Long productId = requestParamExtractor.positiveLongPathVariable(request, "productId");
 

@@ -11,4 +11,6 @@ public interface ProductUseCase {
     Mono<Product> createProduct(CreateProductCommand command);
 
     Mono<ProductMaterial> addMaterial(Long productId, AddMaterialCommand command);
+
+    Mono<Void> deleteProduct(Long productId);
 }

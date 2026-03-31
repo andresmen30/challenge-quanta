@@ -73,6 +73,49 @@ public class ProductRouter {
                     )
             ),
             @RouterOperation(
+                    path = "/products/{productId}",
+                    method = RequestMethod.DELETE,
+                    beanClass = ProductHandler.class,
+                    beanMethod = "deleteProduct",
+                    operation = @Operation(
+                            operationId = "deleteProduct",
+                            summary = "Delete product",
+                            description = "Deletes a product and all its associated materials from the BOM catalog.",
+                            tags = {"Products"},
+                            parameters = {
+                                    @Parameter(
+                                            in = ParameterIn.PATH,
+                                            name = "productId",
+                                            required = true,
+                                            description = "Product identifier",
+                                            schema = @Schema(type = "integer", format = "int64")
+                                    )
+                            },
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "204",
+                                            description = "Product deleted"
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "400",
+                                            description = "Invalid productId",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(implementation = ErrorResponse.class)
+                                            )
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "404",
+                                            description = "Product not found",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(implementation = ErrorResponse.class)
+                                            )
+                                    )
+                            }
+                    )
+            ),
+            @RouterOperation(
                     path = "/products/{productId}/materials",
                     method = RequestMethod.POST,
                     beanClass = ProductHandler.class,
@@ -138,6 +181,7 @@ public class ProductRouter {
     public RouterFunction<ServerResponse> productRoutes(final ProductHandler productHandler) {
         return RouterFunctions.route()
                 .POST("/products", productHandler::createProduct)
+                .DELETE("/products/{productId}", productHandler::deleteProduct)
                 .POST("/products/{productId}/materials", productHandler::addMaterial)
                 .build();
     }

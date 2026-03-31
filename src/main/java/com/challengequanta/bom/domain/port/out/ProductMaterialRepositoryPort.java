@@ -11,4 +11,6 @@ public interface ProductMaterialRepositoryPort {
     Flux<ProductMaterial> findByProductId(Long productId);
 
     Mono<ProductMaterial> findByProductIdAndMaterialIgnoreCase(Long productId, String material);
+
+    Mono<Void> deleteByProductId(Long productId);
 }

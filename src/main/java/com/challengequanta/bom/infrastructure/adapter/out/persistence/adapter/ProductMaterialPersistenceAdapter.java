@@ -33,4 +33,9 @@ public class ProductMaterialPersistenceAdapter implements ProductMaterialReposit
         return productMaterialR2dbcRepository.findByProductIdAndMaterialIgnoreCase(productId, material)
                 .map(productMaterialPersistenceMapper::toDomain);
     }
+
+    @Override
+    public Mono<Void> deleteByProductId(Long productId) {
+        return productMaterialR2dbcRepository.deleteByProductId(productId);
+    }
 }
