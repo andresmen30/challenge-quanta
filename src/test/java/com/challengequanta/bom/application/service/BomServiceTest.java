@@ -229,4 +229,123 @@ class BomServiceTest {
                 })
                 .verify();
     }
+
+    @Test
+    void shouldFailWhenDeletingWithNullProductId() {
+        StepVerifier.create(Mono.defer(() -> bomService.deleteProduct(null)))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("productId must be greater than 0");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenCreatingProductWithNullName() {
+        StepVerifier.create(Mono.defer(() -> bomService.createProduct(new CreateProductCommand(null))))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("Product name is required");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenAddingMaterialWithBlankName() {
+        StepVerifier.create(Mono.defer(() -> bomService.addMaterial(1L, new AddMaterialCommand("   ", 2))))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("Material is required");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenAddingMaterialWithNullQuantity() {
+        StepVerifier.create(Mono.defer(() -> bomService.addMaterial(1L, new AddMaterialCommand("Cuero", null))))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("quantity must be greater than 0");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenAddingMaterialWithInvalidProductId() {
+        StepVerifier.create(Mono.defer(() -> bomService.addMaterial(0L, new AddMaterialCommand("Cuero", 2))))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("productId must be greater than 0");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenCalculatingWithNullQuantity() {
+        StepVerifier.create(Mono.defer(() -> bomService.calculateProduction(1L, null)))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("quantity must be greater than 0");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenCalculatingWithInvalidProductId() {
+        StepVerifier.create(Mono.defer(() -> bomService.calculateProduction(0L, 10)))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("productId must be greater than 0");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenMultiplicationOverflows() {
+        Long productId = 1L;
+
+        when(productRepositoryPort.findById(productId)).thenReturn(Mono.just(new Product(productId, "Zapato")));
+        when(productMaterialRepositoryPort.findByProductId(productId)).thenReturn(Flux.just(
+                new ProductMaterial(1L, productId, "Cuero", Integer.MAX_VALUE)
+        ));
+
+        StepVerifier.create(bomService.calculateProduction(productId, 2))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("Quantity multiplication overflow");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldFailWhenAggregationOverflows() {
+        Long productId = 1L;
+
+        when(productRepositoryPort.findById(productId)).thenReturn(Mono.just(new Product(productId, "Zapato")));
+        when(productMaterialRepositoryPort.findByProductId(productId)).thenReturn(Flux.just(
+                new ProductMaterial(1L, productId, "Cuero", Integer.MAX_VALUE),
+                new ProductMaterial(2L, productId, "cuero", 1)
+        ));
+
+        StepVerifier.create(bomService.calculateProduction(productId, 1))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BadRequestException.class);
+                    assertThat(error.getMessage()).isEqualTo("Quantity aggregation overflow");
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldReturnEmptyMaterialsWhenProductHasNoMaterials() {
+        Long productId = 1L;
+
+        when(productRepositoryPort.findById(productId)).thenReturn(Mono.just(new Product(productId, "Zapato")));
+        when(productMaterialRepositoryPort.findByProductId(productId)).thenReturn(Flux.empty());
+
+        StepVerifier.create(bomService.calculateProduction(productId, 5))
+                .expectNextMatches(result -> result.product().equals("Zapato")
+                        && result.quantity().equals(5)
+                        && result.materials().isEmpty())
+                .verifyComplete();
+    }
 }
